@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no,minimal-ui">
+    <title>Title</title>
+    <link rel="stylesheet" type="text/css" href="/stylesheets/student.css"/>
+
+</head>
+<body>
+学生列表
+<table>
+    <tr>
+        <td>学号</td>
+        <td>姓名</td>
+        <td>性别</td>
+        <td>年龄</td>
+        <td>操作</td>
+    </tr>
+</table>
+<input value="" id="name"/>
+<input value="" id="age"/>
+<label><input name="sex" type="radio" checked="checked" value="0" />男</label>
+<label><input name="sex" type="radio" value="1" />女</label>
+<button id="submit">新增</button>
+
+<br>
+姓名<input id="updateName"><input id="updateId" hidden>
+年龄<input id="updateAge">
+<label><input name="updateSex" type="radio" value="0" />男</label>
+<label><input name="updateSex" type="radio" value="1" />女</label>
+<button onclick="updateImf()">修改</button>
+
+<script src="/js/base/jquery-1.8.3.min.js"></script>
+<script>
+    $(function () {
+        getList();
+        $("#submit").click(function () {
+            toSubmit();
+        });
+    });
+    function getList() {
+        $.ajax({
+            type: 'post',
+            url: '/student/getList',
+            dataType: 'JSON',
+            success: function(data) {
+                var html = "<tr>" +
+                    "<td>学号</td>" +
+                    "<td>姓名</td>" +
+                    "<td>性别</td>" +
+                    "<td>年龄</td>" +
+                    "<td>操作</td>" +
+                    "</tr>";
+                for(var i = 0;i<data.length;i++){
+                    html+="<tr>" +
+                        "<td>"+data[i]["id"]+"</td>" +
+                        "<td>"+data[i]["name"]+"</td>" +
+                        "<td>"+data[i]["age"]+"</td>" +
+                        "<td>"+changeAge(data[i]["sex"])+"</td>" +
+                        "<td><button onclick='update("+data[i]['id']+")'>修改</button><button onclick='del("+data[i]['id']+")'>删除</button></td>"
+                }
+                $("table").html(html);
+            }
+        });
+    }
+    function changeAge(sex) {
+        if(sex == 0) return "男";
+        return "女";
+    }
+    function toSubmit() {
+        var name = $("#name").val();
+        var age = $("#age").val();
+        var sex = $("input[name='sex']:checked").val();
+        if(name == ""){
+            alert("姓名不能为空");
+            return;
+        }
+        if(sex == ""){
+            alert("性别不能为空");
+            return;
+        }
+        if(age == ""){
+            alert("年龄不能为空");
+            return;
+        }
+        $.ajax({
+            type: 'post',
+            url: '/student/addPerson',
+            dataType: 'JSON',
+            data:{
+                name:name,
+                age:age,
+                sex:sex
+            },
+            success: function(data) {
+                if(data.flag){
+                    getList();
+                }else {
+                    alert(data.message);
+                }
+            }
+        });
+    }
+
+    function update(id) {
+        $.ajax({
+            type: 'post',
+            url: '/student/getListById',
+            dataType: 'JSON',
+            data:{
+                id:id
+            },
+            success: function(data) {
+                $("#updateId").val(data[0]["id"]);
+                $("#updateName").val(data[0]["name"]);
+                $("#updateAge").val(data[0]["age"]);
+                $("input[name='updateSex']").attr("checked","");
+                if(data[0]["sex"] == 1){
+                    $("input[name='updateSex'][value='1']").attr('checked','checked');
+                }else{
+                    $("input[name='updateSex'][value='0']").attr('checked','checked');
+                }
+            }
+        });
+    }
+
+    function updateImf() {
+        var id = $("#updateId").val();
+        var name = $("#updateName").val();
+        var age = $("#updateAge").val();
+        var sex = $("input[name='updateSex']:checked").val();
+        $.ajax({
+            type: 'post',
+            url: '/student/updatePerson',
+            dataType: 'JSON',
+            data:{
+                id:id,
+                name:name,
+                age:age,
+                sex:sex
+            },
+            success: function(data) {
+                if(data.flag){
+                    getList();
+                }else {
+                    alert(data.message);
+                }
+            }
+        });
+    }
+
+    function del(id) {
+        $.ajax({
+            type: 'post',
+            url: '/student/delPerson',
+            dataType: 'JSON',
+            data:{
+                id:id
+            },
+            success: function(data) {
+                if(data.flag){
+                    getList();
+                }else {
+                    alert(data.message);
+                }
+            }
+        });
+    }
+</script>
+</body>
+</html>
